@@ -1,0 +1,5 @@
+bin/
+build/
+models/*
+!models/.gitkeep
+llamacpp/llama.cpp/

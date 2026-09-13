@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>layers</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000;
+      --surface: #050505;
+      --surface-raised: #0a0a0a;
+      --surface-soft: #101010;
+      --line: rgba(255, 255, 255, .12);
+      --line-soft: rgba(255, 255, 255, .07);
+      --text: #ededed;
+      --muted: #888;
+      --faint: #555;
+      --accent: #d9ff62;
+      --danger: #ff8585;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -15%, rgba(217, 255, 98, .08), transparent 70%),
+        var(--bg);
+      font: 14px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      letter-spacing: -.01em;
+    }
+    body::before {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(var(--line-soft) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, #000, transparent 68%);
+      content: "";
+      opacity: .3;
+    }
+    button, textarea { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .shell { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 22px 0 48px; }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 42px;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 650; letter-spacing: -.03em; }
+    .brand-mark { display: grid; grid-template-columns: repeat(3, 3px); align-items: end; gap: 2px; width: 15px; height: 15px; }
+    .brand-mark i { display: block; background: var(--text); border-radius: 1px; }
+    .brand-mark i:nth-child(1) { height: 7px; opacity: .5; }
+    .brand-mark i:nth-child(2) { height: 11px; opacity: .75; }
+    .brand-mark i:nth-child(3) { height: 15px; }
+    nav { display: flex; align-items: center; gap: 22px; color: var(--muted); font-size: 12px; }
+    nav a { color: inherit; text-decoration: none; transition: color .2s; }
+    nav a:hover { color: var(--text); }
+    .status { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+    .status::before { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); content: ""; }
+    .status.ready { color: var(--accent); }
+    .status.ready::before { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .status.error { color: var(--danger); }
+    .status.error::before { background: var(--danger); }
+    .hero { padding: 68px 0 38px; }
+    .eyebrow { display: flex; align-items: center; gap: 9px; color: var(--accent); font-size: 11px; font-weight: 650; letter-spacing: .13em; text-transform: uppercase; }
+    .eyebrow span { width: 24px; height: 1px; background: var(--accent); }
+    .hero h1 { max-width: 720px; margin: 14px 0 12px; font-size: clamp(40px, 6vw, 72px); line-height: .98; letter-spacing: -.075em; font-weight: 650; }
+    .hero h1 em { color: var(--muted); font-style: normal; }
+    .hero p { max-width: 490px; margin: 0; color: var(--muted); font-size: 15px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: 14px; background: rgba(5, 5, 5, .82); box-shadow: 0 24px 80px rgba(0, 0, 0, .3); }
+    .chat { min-height: 610px; display: flex; flex-direction: column; overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border-bottom: 1px solid var(--line-soft); }
+    .panel-title { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; }
+    .live { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+    .ghost {
+      border: 0; padding: 4px 0; background: transparent; color: var(--muted);
+      cursor: pointer; font-size: 12px; transition: color .2s;
+    }
+    .ghost:hover { color: var(--text); }
+    .messages { flex: 1; padding: 28px; overflow: auto; }
+    .empty { display: flex; min-height: 390px; flex-direction: column; justify-content: center; max-width: 470px; margin: auto; }
+    .empty-mark { display: grid; place-items: center; width: 46px; height: 46px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 13px; color: var(--accent); background: var(--surface-raised); font-size: 21px; }
+    .empty h2 { margin: 0 0 9px; font-size: 27px; line-height: 1.05; letter-spacing: -.055em; }
+    .empty p { max-width: 390px; margin: 0; color: var(--muted); }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 24px; }
+    .suggestion { border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; transition: border-color .2s, color .2s, background .2s; }
+    .suggestion:hover { border-color: rgba(217, 255, 98, .45); background: rgba(217, 255, 98, .05); color: var(--text); }
+    .message { max-width: 78%; margin: 0 0 22px; white-space: pre-wrap; animation: enter .25s ease-out; }
+    .message.user { margin-left: auto; }
+    .message .label { margin-bottom: 6px; color: var(--muted); font-size: 11px; }
+    .message .body { border: 1px solid var(--line-soft); border-radius: 11px; padding: 12px 14px; background: var(--surface-soft); }
+    .message.user .body { border-color: rgba(217, 255, 98, .18); background: rgba(217, 255, 98, .07); }
+    @keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .composer { display: flex; gap: 10px; margin: 14px; border: 1px solid var(--line); border-radius: 11px; padding: 8px; background: var(--surface-raised); transition: border-color .2s, box-shadow .2s; }
+    .composer:focus-within { border-color: rgba(217, 255, 98, .42); box-shadow: 0 0 0 3px rgba(217, 255, 98, .06); }
+    textarea { flex: 1; min-height: 44px; max-height: 140px; resize: vertical; border: 0; padding: 11px 10px; outline: 0; background: transparent; color: var(--text); }
+    textarea::placeholder { color: var(--faint); }
+    .send {
+      align-self: end; display: grid; place-items: center; width: 42px; height: 42px;
+      border: 0; border-radius: 8px; background: var(--text); color: #000; cursor: pointer;
+      transition: transform .2s, background .2s;
+    }
+    .send:hover { background: var(--accent); transform: translateY(-1px); }
+    .send:disabled { cursor: wait; opacity: .35; transform: none; }
+    .send svg { width: 16px; height: 16px; }
+    .shortcut { align-self: end; padding: 0 3px 12px 0; color: var(--faint); font-size: 10px; }
+    aside { position: sticky; top: 20px; padding: 19px; }
+    aside h2 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+    .side-subtitle { margin: 0 0 18px; color: var(--muted); font-size: 12px; }
+    .side-section { margin-top: 24px; }
+    .side-label { margin-bottom: 8px; color: var(--faint); font-size: 10px; font-weight: 650; letter-spacing: .11em; text-transform: uppercase; }
+    .row { display: flex; justify-content: space-between; gap: 12px; padding: 11px 0; border-top: 1px solid var(--line-soft); }
+    .key { color: var(--muted); }
+    .value { overflow: hidden; color: var(--text); text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+    code { color: var(--accent); font-size: 14px; letter-spacing: .14em; }
+    .node { display: flex; align-items: center; gap: 9px; padding: 11px 0; border-top: 1px solid var(--line-soft); color: var(--muted); font-size: 12px; }
+    .node-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .hint { margin-top: 20px; color: var(--faint); font-size: 11px; line-height: 1.55; }
+    footer { display: flex; justify-content: space-between; margin-top: 16px; color: var(--faint); font-size: 11px; }
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 24px, 1180px); padding-top: 14px; }
+      nav a { display: none; }
+      .hero { padding: 48px 0 28px; }
+      .hero h1 { font-size: clamp(42px, 13vw, 64px); }
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; order: -1; display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+      aside h2, aside .side-subtitle { grid-column: 1 / -1; }
+      .side-section { margin-top: 16px; }
+      .chat { min-height: 64vh; }
+      .messages { padding: 20px 16px; }
+      .empty { min-height: 310px; }
+      .shortcut { display: none; }
+      footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark"><i></i><i></i><i></i></span>layers</div>
+      <nav>
+        <a href="#chat">Chat</a>
+        <a href="#room-panel">Room</a>
+        <span id="connection" class="status">checking backend…</span>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow"><span></span>local inference room</div>
+      <h1>One model.<br><em>Many machines.</em></h1>
+      <p>Private, local inference powered by the devices in your room. No cloud account. No data leaves your network.</p>
+    </section>
+
+    <section id="chat" class="layout">
+      <div class="panel chat">
+        <div class="panel-head">
+          <div class="panel-title"><span class="live"></span>Conversation</div>
+          <button id="clear" class="ghost" type="button">Clear</button>
+        </div>
+        <div id="messages" class="messages">
+          <div id="empty" class="empty">
+            <div class="empty-mark">✦</div>
+            <h2>What will you build?</h2>
+            <p>Ask your local model anything. Your prompt stays on this machine and the connected layer workers.</p>
+            <div class="suggestions">
+              <button class="suggestion" type="button">Explain how layers work</button>
+              <button class="suggestion" type="button">Write a Go function</button>
+              <button class="suggestion" type="button">Summarize this idea</button>
+            </div>
+          </div>
+        </div>
+        <form id="composer" class="composer">
+          <textarea id="prompt" placeholder="Ask anything…" rows="1" required></textarea>
+          <span class="shortcut">⌘ ↵</span>
+          <button id="send" class="send" type="submit" aria-label="Send message">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.5 8h10M8.5 3.5 13 8l-4.5 4.5"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <aside id="room-panel" class="panel">
+        <h2>Room overview</h2>
+        <p class="side-subtitle">Your local inference network</p>
+        <div class="side-section">
+          <div class="side-label">Session</div>
+          <div class="row"><span class="key">Room code</span><code id="room">—</code></div>
+          <div class="row"><span class="key">Model</span><span id="model" class="value">—</span></div>
+          <div class="row"><span class="key">LLM</span><span id="llm" class="value">offline</span></div>
+        </div>
+        <div class="side-section">
+          <div class="side-label">Devices</div>
+          <div class="node"><span class="node-dot"></span><span>Host · this machine</span><span id="workers" class="value">0 workers</span></div>
+        </div>
+        <p class="hint">Workers contribute GPU memory. The host coordinates the model and streams the answer back here.</p>
+      </aside>
+    </section>
+    <footer><span>layers / local inference</span><span>Built for your room</span></footer>
+  </main>
+
+  <script>
+    const messages = document.querySelector('#messages');
+    const empty = document.querySelector('#empty');
+    const prompt = document.querySelector('#prompt');
+    const send = document.querySelector('#send');
+    const connection = document.querySelector('#connection');
+    const clear = document.querySelector('#clear');
+
+    function addMessage(role, text = '') {
+      document.querySelector('#empty')?.remove();
+      const item = document.createElement('article');
+      item.className = `message ${role}`;
+      item.innerHTML = `<div class="label">${role === 'user' ? 'You' : 'layers'}</div><div class="body"></div>`;
+      item.querySelector('.body').textContent = text;
+      messages.append(item);
+      messages.scrollTop = messages.scrollHeight;
+      return item.querySelector('.body');
+    }
+
+    async function refreshStatus() {
+      try {
+        const response = await fetch('/api/status');
+        const status = await response.json();
+        document.querySelector('#room').textContent = status.room || '—';
+        document.querySelector('#workers').textContent = `${status.worker_count} worker${status.worker_count === 1 ? '' : 's'}`;
+        document.querySelector('#model').textContent = status.model || 'not selected';
+        document.querySelector('#llm').textContent = status.llm_ready ? 'ready' : 'offline';
+        connection.textContent = status.llm_ready ? 'ready' : 'backend offline';
+        connection.className = `status ${status.llm_ready ? 'ready' : 'error'}`;
+      } catch {
+        connection.textContent = 'host offline';
+        connection.className = 'status error';
+      }
+    }
+
+    document.querySelectorAll('.suggestion').forEach((suggestion) => {
+      suggestion.addEventListener('click', () => {
+        prompt.value = suggestion.textContent;
+        prompt.focus();
+      });
+    });
+
+    clear.addEventListener('click', () => {
+      messages.innerHTML = `<div id="empty" class="empty">
+        <div class="empty-mark">✦</div>
+        <h2>What will you build?</h2>
+        <p>Ask your local model anything. Your prompt stays on this machine and the connected layer workers.</p>
+      </div>`;
+    });
+
+    prompt.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+        document.querySelector('#composer').requestSubmit();
+      }
+    });
+
+    async function streamChat(text, output) {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          messages: [{role: 'user', content: text}],
+          stream: true
+        })
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, {stream: true});
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ') || line === 'data: [DONE]') continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+            output.textContent += data.choices?.[0]?.delta?.content || '';
+            messages.scrollTop = messages.scrollHeight;
+          } catch {}
+        }
+      }
+    }
+
+    document.querySelector('#composer').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const text = prompt.value.trim();
+      if (!text || send.disabled) return;
+      prompt.value = '';
+      addMessage('user', text);
+      const output = addMessage('assistant');
+      send.disabled = true;
+      connection.textContent = 'generating…';
+      connection.className = 'status';
+      try {
+        await streamChat(text, output);
+      } catch (error) {
+        output.textContent = error.message || 'The LLM request failed.';
+        connection.textContent = 'backend error';
+        connection.className = 'status error';
+      } finally {
+        send.disabled = false;
+        refreshStatus();
+        prompt.focus();
+      }
+    });
+
+    refreshStatus();
+    setInterval(refreshStatus, 3000);
+  </script>
+</body>
+</html>
