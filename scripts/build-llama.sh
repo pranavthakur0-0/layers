@@ -34,6 +34,15 @@ EOF
   fi
 fi
 
+if [[ -n "$REF" && -d "$SOURCE/.git" ]]; then
+  current_ref="$(git -C "$SOURCE" rev-parse HEAD 2>/dev/null || true)"
+  if [[ "$current_ref" != "$REF" ]]; then
+    echo "Updating llama.cpp checkout to pinned commit $REF."
+    git -C "$SOURCE" fetch --depth 1 origin "$REF"
+    git -C "$SOURCE" checkout --detach "$REF"
+  fi
+fi
+
 if [[ -f "$BUILD/CMakeCache.txt" ]]; then
   configured_source="$(awk -F= '$1 == "CMAKE_HOME_DIRECTORY" {print $2}' "$BUILD/CMakeCache.txt")"
   if [[ "$configured_source" != "$SOURCE" ]]; then
