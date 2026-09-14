@@ -329,6 +329,9 @@ func startLlamaServer(binary, model, hfRepo, baseURL string, nodes []proto.NodeI
 		}
 		rpcAddrs = append(rpcAddrs, node.RPCAddr)
 	}
+	if err := waitForRPCServers(rpcAddrs, 15*time.Second); err != nil {
+		return nil, err
+	}
 
 	args := []string{"--host", "127.0.0.1",
 		"--port", parsed.Port(),
@@ -345,6 +348,30 @@ func startLlamaServer(binary, model, hfRepo, baseURL string, nodes []proto.NodeI
 		args = append(args, "--tensor-split", split)
 	}
 	return proc.Start(binary, args...)
+}
+
+func waitForRPCServers(addresses []string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for {
+		allReady := true
+		var lastErr error
+		for _, address := range addresses {
+			connection, err := net.DialTimeout("tcp", address, 500*time.Millisecond)
+			if err != nil {
+				allReady = false
+				lastErr = fmt.Errorf("%s: %w", address, err)
+				break
+			}
+			_ = connection.Close()
+		}
+		if allReady {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			return fmt.Errorf("worker RPC did not become ready: %w", lastErr)
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
 }
 
 func tensorSplit(nodes []proto.NodeInfo) (string, bool) {
