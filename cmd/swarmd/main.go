@@ -337,7 +337,8 @@ func startLlamaServer(binary, model, hfRepo, baseURL string, nodes []proto.NodeI
 		"--port", parsed.Port(),
 		"--rpc", strings.Join(rpcAddrs, ","),
 		"--split-mode", "layer",
-		"-ngl", "99",
+		"--fit", "off",
+		"-ngl", "all",
 	}
 	if hfRepo != "" {
 		args = append([]string{"-hf", hfRepo}, args...)
